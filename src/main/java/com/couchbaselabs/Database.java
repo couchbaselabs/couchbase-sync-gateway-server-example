@@ -18,7 +18,7 @@ public class Database {
     private Database() { }
 
     public static List<Map<String, Object>> getById(final Bucket bucket, String todoId) {
-        String queryStr = "SELECT META().id, title, description, type " +
+        String queryStr = "SELECT META().id, _sync.rev, title, description, type " +
                 "FROM `" + bucket.name() + "` " +
                 "WHERE type = 'todo' AND META().id = $1";
         ParameterizedN1qlQuery query = ParameterizedN1qlQuery.parameterized(queryStr, JsonArray.create().add(todoId));
@@ -27,7 +27,7 @@ public class Database {
     }
 
     public static List<Map<String, Object>> getAll(final Bucket bucket) {
-        String queryStr = "SELECT META().id, title, description, type " +
+        String queryStr = "SELECT META().id, _sync.rev, title, description, type " +
                 "FROM `" + bucket.name() + "` " +
                 "WHERE type = 'todo'";
         N1qlQueryResult queryResult = bucket.query(N1qlQuery.simple(queryStr));

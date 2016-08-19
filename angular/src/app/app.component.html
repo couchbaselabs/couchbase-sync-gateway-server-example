@@ -1,3 +1,54 @@
-<h1>
-  {{title}}
-</h1>
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <strong>Server + Sync Gateway Example</strong>
+                    <div class="pull-right">
+                        <a style="cursor: pointer" (click)="clear()"><span class="glyphicon glyphicon-trash"></span></a>
+                        <a style="cursor: pointer" data-toggle="modal" data-target="#createTodoModal"><span class="glyphicon glyphicon-plus"></span></a>
+                    </div>
+                </div>
+                <div class="panel-body" *ngIf="todos.length < 1">
+                    <div class="alert alert-warning" role="alert">
+                        <strong>Oh no!</strong> There aren't any items in your list.  Think about adding some.
+                    </div>
+                </div>
+                <ul class="list-group" *ngIf="todos.length > 0">
+                    <li class="list-group-item" *ngFor="let todo of todos">{{todo.title}}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="createTodoModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Create New Todo</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">Title</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" [(ngModel)]="title">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">Description</label>
+                        <div class="col-sm-10">
+                            <textarea class="form-control" rows="5" [(ngModel)]="description"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal" (click)="save()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>

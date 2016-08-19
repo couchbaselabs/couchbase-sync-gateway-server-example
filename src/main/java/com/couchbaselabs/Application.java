@@ -3,7 +3,15 @@ package com.couchbaselabs;
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.Cluster;
 import com.couchbase.client.java.CouchbaseCluster;
+import com.couchbase.client.java.document.json.JsonArray;
 import com.couchbase.client.java.document.json.JsonObject;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -15,7 +23,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @SpringBootApplication
@@ -33,6 +45,7 @@ public class Application implements Filter {
         HttpServletResponse response = (HttpServletResponse) res;
         response.setHeader("Access-Control-Allow-Origin", "*");
         response.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+        response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
         chain.doFilter(req, res);
     }
 
@@ -62,25 +75,80 @@ public class Application implements Filter {
     }
 
     @RequestMapping(value="/todo/{todoId}", method= RequestMethod.GET)
-    public Object getUserById(@PathVariable("todoId") String todoId) {
+    public Object getById(@PathVariable("todoId") String todoId) {
         return Database.getById(bucket(), todoId);
     }
 
     @RequestMapping(value="/todo", method= RequestMethod.GET)
-    public Object getUsers() {
+    public Object getAll() {
         return Database.getAll(bucket());
     }
 
-
-   /* @RequestMapping(value="/user/create", method= RequestMethod.POST)
-    public Object createUser(@RequestBody String json) {
-        JsonObject jsonData = JsonObject.fromJson(json);
-        if(!jsonData.containsKey("username")) {
-            return new ResponseEntity<String>(JsonObject.create().put("error", 400).put("message", "A username must exist").toString(), HttpStatus.BAD_REQUEST);
-        } else if(!jsonData.containsKey("password")) {
-            return new ResponseEntity<String>(JsonObject.create().put("error", 400).put("message", "A password must exist").toString(), HttpStatus.BAD_REQUEST);
+    @RequestMapping(value="/todo", method= RequestMethod.DELETE)
+    public Object deleteAll(@RequestBody String json) {
+        JsonArray jsonData = JsonArray.fromJson(json);
+        //List<Object> todoIdList = jsonData.toList();
+        JsonArray responses = JsonArray.create();
+        for(int i = 0; i < jsonData.size(); i++) {
+            System.out.println(jsonData.getObject(i).getString("id"));
+            responses.add(makeDeleteRequest("http://localhost:4984/" + bucket().name() + "/" + jsonData.getObject(i).getString("id") + "/" + jsonData.getObject(i).getString("rev")));
         }
-        return Database.createUser(bucket(), jsonData, jsonData.getString("username"), jsonData.getString("password"));
-    }*/
+        return new ResponseEntity<String>(responses.toString(), HttpStatus.OK);
+    }
+
+
+    @RequestMapping(value="/todo", method= RequestMethod.POST)
+    public Object createTodo(@RequestBody String json) {
+        JsonObject jsonData = JsonObject.fromJson(json);
+        if(!jsonData.containsKey("title")) {
+            return new ResponseEntity<String>(JsonObject.create().put("error", 400).put("message", "A title must exist").toString(), HttpStatus.BAD_REQUEST);
+        } else if(!jsonData.containsKey("description")) {
+            return new ResponseEntity<String>(JsonObject.create().put("error", 400).put("message", "A description must exist").toString(), HttpStatus.BAD_REQUEST);
+        }
+        JsonObject data = JsonObject.create().put("title", jsonData.get("title")).put("description", jsonData.get("description")).put("type", "todo");
+        JsonObject response = makePostRequest("http://localhost:4984/" + bucket().name() + "/", data.toString());
+        return new ResponseEntity<String>(response.getObject("content").toString(), HttpStatus.valueOf(response.getInt("status")));
+    }
+
+    private JsonObject makePostRequest(String url, String body) {
+        JsonObject jsonResult = JsonObject.create();
+        try {
+            HttpClient client = HttpClientBuilder.create().build();
+            HttpPost post = new HttpPost(url);
+            post.setEntity(new StringEntity(body, ContentType.create("application/json")));
+            HttpResponse response = client.execute(post);
+            BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+            String line = "";
+            String result = "";
+            while ((line = rd.readLine()) != null) {
+                result += line;
+            }
+            jsonResult.put("status", response.getStatusLine().getStatusCode());
+            jsonResult.put("content", JsonObject.fromJson(result));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return jsonResult;
+    }
+
+    private JsonObject makeDeleteRequest(String url) {
+        JsonObject jsonResult = JsonObject.create();
+        try {
+            HttpClient client = HttpClientBuilder.create().build();
+            HttpDelete delete = new HttpDelete(url);
+            HttpResponse response = client.execute(delete);
+            BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+            String line = "";
+            String result = "";
+            while ((line = rd.readLine()) != null) {
+                result += line;
+            }
+            jsonResult.put("status", response.getStatusLine().getStatusCode());
+            jsonResult.put("content", JsonObject.fromJson(result));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return jsonResult;
+    }
 
 }
