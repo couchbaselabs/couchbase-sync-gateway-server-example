@@ -1,0 +1,10 @@
+target/
+.idea/
+angular/public/
+angular/dist/
+angular/tmp/
+angular/node_modules/
+
+.DS_Store*
+Thumbs.db*
+~*
