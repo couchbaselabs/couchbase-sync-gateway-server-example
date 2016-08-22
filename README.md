@@ -21,6 +21,14 @@ Couchbase Server is required for hosting the data and Sync Gateway is required f
 To run this application, execute the following from the command line after downloading the project:
 
 ```sh
+/path/to/sync/gateway/bin/sync_gateway sync-gateway-config.json
+```
+
+The above command will launch Sync Gateway and connect it to a Couchbase bucket called **fx-example**.  This bucket must exist prior with a primary index created.
+
+With Sync Gateway running, execute the following to run the Java application:
+
+```sh
 mvn spring-boot:run
 ```
 
