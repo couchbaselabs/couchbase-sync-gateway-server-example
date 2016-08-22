@@ -40,6 +40,7 @@ export class AppComponent implements OnInit {
             .subscribe(result => {
                 this.todos.push({
                     "id": result.id,
+                    "rev": result.rev,
                     "title": this.title,
                     "description": this.description
                 });
@@ -50,21 +51,21 @@ export class AppComponent implements OnInit {
     }
 
     public clear() {
-        let ids: Array<any> = [];
+        let documents: Array<any> = [];
         for(let i = 0; i < this.todos.length; i++) {
-            ids.push({"id": this.todos[i].id, "rev": this.todos[i].rev});
+            documents.push({"id": this.todos[i].id, "rev": this.todos[i].rev});
         }
         let requestHeaders = new Headers();
         requestHeaders.append("Content-Type", "application/json");
         this.http.request(new Request({
             method: RequestMethod.Delete,
             url: "http://localhost:8080/api/todo",
-            body: JSON.stringify(ids),
+            body: JSON.stringify(documents),
             headers: requestHeaders
         }))
         .map(result => result.json())
         .subscribe(result => {
-            console.log(result);
+            this.todos = [];
         }, error => {
             console.error(error);
         });

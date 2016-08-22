@@ -14,10 +14,8 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,8 +24,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
 
 
 @SpringBootApplication
@@ -87,11 +83,9 @@ public class Application implements Filter {
     @RequestMapping(value="/todo", method= RequestMethod.DELETE)
     public Object deleteAll(@RequestBody String json) {
         JsonArray jsonData = JsonArray.fromJson(json);
-        //List<Object> todoIdList = jsonData.toList();
         JsonArray responses = JsonArray.create();
         for(int i = 0; i < jsonData.size(); i++) {
-            System.out.println(jsonData.getObject(i).getString("id"));
-            responses.add(makeDeleteRequest("http://localhost:4984/" + bucket().name() + "/" + jsonData.getObject(i).getString("id") + "/" + jsonData.getObject(i).getString("rev")));
+            responses.add(makeDeleteRequest("http://localhost:4984/" + bucket().name() + "/" + jsonData.getObject(i).getString("id") + "?rev=" + jsonData.getObject(i).getString("rev")));
         }
         return new ResponseEntity<String>(responses.toString(), HttpStatus.OK);
     }
