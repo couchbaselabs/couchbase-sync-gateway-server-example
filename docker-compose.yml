@@ -1,0 +1,7 @@
+version: "2"
+services:
+  db:
+    image: arungupta/couchbase-sync-sdk-example
+    ports:
+      - 8080:8080
+
