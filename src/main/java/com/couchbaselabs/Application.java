@@ -51,23 +51,26 @@ public class Application implements Filter {
     @Override
     public void destroy() {}
 
-    @Value("${hostname}")
-    private String hostname;
+    @Value("${server.hostname}")
+    private String serverHostname;
 
-    @Value("${bucket}")
-    private String bucket;
+    @Value("${server.bucket}")
+    private String serverBucket;
 
-    @Value("${password}")
-    private String password;
+    @Value("${server.password}")
+    private String serverBucketPassword;
+
+    @Value("${gateway.hostname}")
+    private String gatewayHostname;
 
     public @Bean
     Cluster cluster() {
-        return CouchbaseCluster.create(hostname);
+        return CouchbaseCluster.create(serverHostname);
     }
 
     public @Bean
     Bucket bucket() {
-        return cluster().openBucket(bucket, password);
+        return cluster().openBucket(serverBucket, serverBucketPassword);
     }
 
     @RequestMapping(value="/todo/{todoId}", method= RequestMethod.GET)
@@ -85,7 +88,7 @@ public class Application implements Filter {
         JsonArray jsonData = JsonArray.fromJson(json);
         JsonArray responses = JsonArray.create();
         for(int i = 0; i < jsonData.size(); i++) {
-            responses.add(makeDeleteRequest("http://localhost:4984/" + bucket().name() + "/" + jsonData.getObject(i).getString("id") + "?rev=" + jsonData.getObject(i).getString("rev")));
+            responses.add(makeDeleteRequest("http://" + gatewayHostname + ":4984/" + bucket().name() + "/" + jsonData.getObject(i).getString("id") + "?rev=" + jsonData.getObject(i).getString("rev")));
         }
         return new ResponseEntity<String>(responses.toString(), HttpStatus.OK);
     }
@@ -100,7 +103,7 @@ public class Application implements Filter {
             return new ResponseEntity<String>(JsonObject.create().put("error", 400).put("message", "A description must exist").toString(), HttpStatus.BAD_REQUEST);
         }
         JsonObject data = JsonObject.create().put("title", jsonData.get("title")).put("description", jsonData.get("description")).put("type", "todo");
-        JsonObject response = makePostRequest("http://localhost:4984/" + bucket().name() + "/", data.toString());
+        JsonObject response = makePostRequest("http://" + gatewayHostname + ":4984/" + bucket().name() + "/", data.toString());
         return new ResponseEntity<String>(response.getObject("content").toString(), HttpStatus.valueOf(response.getInt("status")));
     }
 
