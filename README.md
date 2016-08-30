@@ -34,6 +34,21 @@ mvn spring-boot:run
 
 This will start a server which can be accessed from http://localhost:8080.
 
+## Running the Application using Docker
+
+Run Couchbase Server and Sync Gateway as explained at https://github.com/couchbaselabs/docker-deployment-example/tree/master/docker.
+
+Update `application.properties` with the address of Couchbase Server and Sync Gateway:
+
+```
+sed -i '' s/server.hostname=localhost/$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' db)/g
+sed -i '' s/gateway.hostname=localhost/$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' gateway)/g
+```
+
+Build the Docker image: `mvn clean package -Pdocker`
+
+Run the container: `docker-compose up -d`
+
 ## Resources
 
 Couchbase - [http://www.couchbase.com](http://www.couchbase.com)
